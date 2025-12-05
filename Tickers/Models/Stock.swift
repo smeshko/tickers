@@ -1,0 +1,43 @@
+import Foundation
+
+struct Stock: Identifiable {
+    
+    enum PriceDirection {
+        case up
+        case down
+        case unchanged
+    }
+    
+    let id: String
+    let symbol: String
+    let name: String
+    var price: Double
+    var previousPrice: Double
+
+    var priceDirection: PriceDirection {
+        if price > previousPrice {
+            return .up
+        } else if price < previousPrice {
+            return .down
+        } else {
+            return .unchanged
+        }
+    }
+
+    var priceChange: Double {
+        price - previousPrice
+    }
+
+    var priceChangePercent: Double {
+        guard previousPrice > 0 else { return 0 }
+        return (priceChange / previousPrice) * 100
+    }
+
+    init(symbol: String, name: String, price: Double, previousPrice: Double? = nil) {
+        self.id = symbol
+        self.symbol = symbol
+        self.name = name
+        self.price = price
+        self.previousPrice = previousPrice ?? price
+    }
+}
