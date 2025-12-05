@@ -30,7 +30,7 @@ struct Stock: Identifiable {
 
     var priceChangePercent: Double {
         guard previousPrice > 0 else { return 0 }
-        return (priceChange / previousPrice) * 100
+        return (priceChange / previousPrice)
     }
 
     init(symbol: String, name: String, price: Double, previousPrice: Double? = nil) {

@@ -163,7 +163,7 @@ enum StockData {
 
     static func createInitialStocks() -> [Stock] {
         stocks.map { info in
-            Stock(symbol: info.symbol, name: info.name, price: info.basePrice)
+            Stock(symbol: info.symbol, name: info.name, price: info.basePrice, previousPrice: info.basePrice - Double.random(in: 0...10))
         }
     }
 
