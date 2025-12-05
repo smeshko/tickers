@@ -1,6 +1,6 @@
 import Foundation
 
-struct Stock: Identifiable {
+struct Stock: Identifiable, Hashable {
     
     enum PriceDirection {
         case up

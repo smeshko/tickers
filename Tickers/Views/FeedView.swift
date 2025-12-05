@@ -12,8 +12,13 @@ struct FeedView: View {
     var body: some View {
         NavigationStack {
             List(sortedStocks) { stock in
-                StockRowView(stock: stock)
-                    .listRowSeparator(.hidden)
+                NavigationLink(value: stock) {
+                    StockRowView(stock: stock)
+                }
+                .listRowSeparator(.hidden)
+            }
+            .navigationDestination(for: Stock.self) { stock in
+                SymbolDetailView(stock: stock)
             }
             .listStyle(.plain)
             .navigationTitle("Stocks")
