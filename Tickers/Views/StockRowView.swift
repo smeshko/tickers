@@ -2,6 +2,7 @@ import SwiftUI
 
 struct StockRowView: View {
     let stock: Stock
+    @State private var isFlashing = false
 
     var body: some View {
         HStack(spacing: 12) {
@@ -22,11 +23,28 @@ struct StockRowView: View {
                     .font(.body)
                     .fontWeight(.medium)
                     .monospacedDigit()
+                    .foregroundStyle(isFlashing ? flashColor : .primary)
 
                 changeBadge
             }
         }
         .padding(.vertical, 6)
+        .onChange(of: stock.price) {
+            triggerFlash()
+        }
+    }
+
+    private func triggerFlash() {
+        withAnimation(.easeIn(duration: 0.1)) {
+            isFlashing = true
+        }
+
+        Task {
+            try? await Task.sleep(for: .seconds(1))
+            withAnimation(.easeOut(duration: 0.3)) {
+                isFlashing = false
+            }
+        }
     }
 
     private var changeBadge: some View {
@@ -55,6 +73,14 @@ struct StockRowView: View {
     }
 
     private var badgeColor: Color {
+        switch stock.priceDirection {
+        case .up: .green
+        case .down: .red
+        case .unchanged: .secondary
+        }
+    }
+
+    private var flashColor: Color {
         switch stock.priceDirection {
         case .up: .green
         case .down: .red
