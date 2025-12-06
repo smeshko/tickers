@@ -11,11 +11,13 @@ final class MockPriceFeedRepository: PriceFeedRepositoryProtocol {
     }
 
     func fetchStocks() async -> [Stock] {
-        StockData.createInitialStocks()
+        let dtos = StockData.createInitialStocks()
+        return dtos.map { Stock(dto: $0) }
     }
 
     func stockInfo(for symbol: String) -> StockInfo? {
-        StockData.stockInfo(for: symbol)
+        guard let dto = StockData.stockInfo(for: symbol) else { return nil }
+        return StockInfo(dto: dto)
     }
 
     func startStreaming(for stocks: [Stock]) {}

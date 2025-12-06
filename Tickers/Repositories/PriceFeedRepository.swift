@@ -17,43 +17,53 @@ final class PriceFeedRepository: PriceFeedRepositoryProtocol {
     private let decoder = JSONDecoder()
     private var cancellables = Set<AnyCancellable>()
     private var timerCancellable: AnyCancellable?
-    
+
     private let priceUpdatesSubject = PassthroughSubject<[PriceUpdate], Never>()
-    private var currentStocks: [Stock] = []
+    private var currentStocks: [StockDTO] = []
     private let priceFluctuationRange: ClosedRange<Double> = -0.02...0.02
-    
+
     var isConnectedPublisher: AnyPublisher<Bool, Never> {
         webSocketService.isConnectedPublisher
     }
-    
+
     var priceUpdatesPublisher: AnyPublisher<[PriceUpdate], Never> {
         priceUpdatesSubject.eraseToAnyPublisher()
     }
-    
+
     init(webSocketService: WebSocketServiceProtocol) {
         self.webSocketService = webSocketService
         setupMessageHandling()
     }
-    
+
     func fetchStocks() async -> [Stock] {
-        StockData.createInitialStocks()
+        StockData
+            .createInitialStocks()
+            .map(Stock.init(dto:))
     }
 
     func stockInfo(for symbol: String) -> StockInfo? {
-        StockData.stockInfo(for: symbol)
+        guard let dto = StockData.stockInfo(for: symbol) else { return nil }
+        return StockInfo(dto: dto)
     }
 
     func startStreaming(for stocks: [Stock]) {
-        currentStocks = stocks
+        currentStocks = stocks.map { stock in
+            StockDTO(
+                symbol: stock.symbol,
+                name: stock.name,
+                price: stock.price,
+                previousPrice: stock.previousPrice
+            )
+        }
         webSocketService.connect()
-        
+
         timerCancellable = Timer.publish(every: 2.0, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
                 self?.generateAndSendPriceUpdates()
             }
     }
-    
+
     func stopStreaming() {
         timerCancellable?.cancel()
         timerCancellable = nil
@@ -62,43 +72,43 @@ final class PriceFeedRepository: PriceFeedRepositoryProtocol {
 }
 
 private extension PriceFeedRepository {
-    
+
     func setupMessageHandling() {
         webSocketService.messagePublisher
             .compactMap { [weak self] message -> [PriceUpdate]? in
-                self?.decodePriceUpdates(from: message)
+                guard let dtos = self?.decodePriceUpdates(from: message) else { return nil }
+                return dtos.map { PriceUpdate(dto: $0) }
             }
             .sink { [weak self] updates in
                 self?.priceUpdatesSubject.send(updates)
             }
             .store(in: &cancellables)
     }
+
     func generateAndSendPriceUpdates() {
         let updates = currentStocks.map { stock in
             let percentChange = Double.random(in: priceFluctuationRange)
             let newPrice = max(0.01, stock.price * (1 + percentChange))
-            return PriceUpdate(symbol: stock.symbol, price: newPrice)
+            return PriceUpdateDTO(symbol: stock.symbol, price: newPrice)
         }
-        
+
         guard let jsonString = encodePriceUpdates(updates) else { return }
         webSocketService.send(jsonString)
     }
-    
-    func encodePriceUpdates(_ updates: [PriceUpdate]) -> String? {
-        let codableUpdates = updates.map { PriceUpdate(symbol: $0.symbol, price: $0.price) }
-        guard let data = try? encoder.encode(codableUpdates),
+
+    func encodePriceUpdates(_ updates: [PriceUpdateDTO]) -> String? {
+        guard let data = try? encoder.encode(updates),
               let jsonString = String(data: data, encoding: .utf8) else {
             return nil
         }
         return jsonString
     }
-    
-    func decodePriceUpdates(from message: String) -> [PriceUpdate]? {
+
+    func decodePriceUpdates(from message: String) -> [PriceUpdateDTO]? {
         guard let data = message.data(using: .utf8),
-              let decoded = try? decoder.decode([PriceUpdate].self, from: data) else {
+              let decoded = try? decoder.decode([PriceUpdateDTO].self, from: data) else {
             return nil
         }
-        return decoded.map { PriceUpdate(symbol: $0.symbol, price: $0.price) }
+        return decoded
     }
-    
 }

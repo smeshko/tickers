@@ -52,7 +52,7 @@ final class PriceFeedViewModel: ObservableObject {
 }
 
 private extension PriceFeedViewModel {
-    
+
     private func loadStocks() async {
         stocks = await repository.fetchStocks()
     }

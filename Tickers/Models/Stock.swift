@@ -24,7 +24,7 @@ struct Stock: Identifiable, Hashable {
             }
         }
     }
-    
+
     let id: String
     let symbol: String
     let name: String
@@ -56,5 +56,13 @@ struct Stock: Identifiable, Hashable {
         self.name = name
         self.price = price
         self.previousPrice = previousPrice ?? price
+    }
+
+    init(dto: StockDTO) {
+        self.id = dto.symbol
+        self.symbol = dto.symbol
+        self.name = dto.name
+        self.price = dto.price
+        self.previousPrice = dto.previousPrice
     }
 }
