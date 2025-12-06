@@ -28,7 +28,7 @@ struct StockRowView: View {
                 changeBadge
             }
         }
-        .padding(.vertical, 6)
+        .padding(.vertical, 8)
         .onChange(of: stock.price) {
             triggerFlash()
         }

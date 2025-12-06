@@ -22,9 +22,11 @@ struct FeedView: View {
                     connectionStatusView
                 }
                 .sharedBackgroundVisibility(.hidden)
+                
                 ToolbarItem(placement: .topBarTrailing) {
                     streamToggleButton
                 }
+                .sharedBackgroundVisibility(.hidden)
             }
         }
     }
@@ -33,7 +35,13 @@ struct FeedView: View {
         Circle()
             .fill(viewModel.isConnected ? .green : .red.opacity(0.8))
             .frame(width: 8, height: 8)
-            .animation(.easeInOut(duration: 0.3), value: viewModel.isConnected)
+            .scaleEffect(viewModel.isConnected ? 1.0 : 1.2)
+            .animation(
+                viewModel.isConnected
+                    ? .easeInOut(duration: 0.3)
+                    : .easeInOut(duration: 0.6).repeatForever(autoreverses: true),
+                value: viewModel.isConnected
+            )
     }
 
     private var streamToggleButton: some View {
@@ -43,7 +51,13 @@ struct FeedView: View {
             Text(viewModel.isStreaming ? "Stop" : "Start")
                 .font(.subheadline)
                 .fontWeight(.medium)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 6)
+                .background(viewModel.isStreaming ? Color.red.opacity(0.15) : Color.accentColor.opacity(0.15))
+                .foregroundStyle(viewModel.isStreaming ? .red : .accentColor)
+                .clipShape(Capsule())
         }
+        .animation(.easeInOut(duration: 0.2), value: viewModel.isStreaming)
     }
 }
 
