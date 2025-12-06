@@ -7,35 +7,31 @@ final class PriceFeedViewModel: ObservableObject {
     @Published private(set) var isStreaming = false
     @Published private(set) var isConnected = false
 
-    private var timerCancellable: AnyCancellable?
-    private let priceFluctuationRange: ClosedRange<Double> = -0.02...0.02
+    private let repository: PriceFeedRepositoryProtocol
+    private var cancellables = Set<AnyCancellable>()
 
     var sortedStocks: [Stock] {
         stocks.sorted { $0.price > $1.price }
     }
 
-    init() {
-        stocks = StockData.createInitialStocks()
+    init(repository: PriceFeedRepositoryProtocol) {
+        self.repository = repository
+        setupSubscriptions()
+
+        Task {
+            await loadStocks()
+        }
     }
 
     func startStreaming() {
         guard !isStreaming else { return }
-
         isStreaming = true
-        isConnected = true
-
-        timerCancellable = Timer.publish(every: 2.0, on: .main, in: .common)
-            .autoconnect()
-            .sink { [weak self] _ in
-                self?.generatePriceUpdates()
-            }
+        repository.startStreaming(for: stocks)
     }
 
     func stopStreaming() {
-        timerCancellable?.cancel()
-        timerCancellable = nil
         isStreaming = false
-        isConnected = false
+        repository.stopStreaming()
     }
 
     func toggleStreaming() {
@@ -46,20 +42,54 @@ final class PriceFeedViewModel: ObservableObject {
         }
     }
 
-    private func generatePriceUpdates() {
-        stocks = stocks.map { stock in
-            var updatedStock = stock
-            let percentChange = Double.random(in: priceFluctuationRange)
-            let newPrice = stock.price * (1 + percentChange)
-
-            updatedStock.previousPrice = stock.price
-            updatedStock.price = max(0.01, newPrice)
-
-            return updatedStock
-        }
-    }
-
     func stock(for symbol: String) -> Stock? {
         stocks.first { $0.symbol == symbol }
+    }
+
+    func stockInfo(for symbol: String) -> StockInfo? {
+        repository.stockInfo(for: symbol)
+    }
+}
+
+private extension PriceFeedViewModel {
+    
+    private func loadStocks() async {
+        stocks = await repository.fetchStocks()
+    }
+
+    private func setupSubscriptions() {
+        repository.isConnectedPublisher
+            .receive(on: DispatchQueue.main)
+            .assign(to: &$isConnected)
+
+        repository.priceUpdatesPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [weak self] updates in
+                self?.applyPriceUpdates(updates)
+            }
+            .store(in: &cancellables)
+    }
+
+    private func applyPriceUpdates(_ updates: [PriceUpdate]) {
+        var updatedStocks = stocks
+
+        // TODO: Improve performance
+        for update in updates {
+            if let index = updatedStocks.firstIndex(where: { $0.symbol == update.symbol }) {
+                updatedStocks[index].previousPrice = updatedStocks[index].price
+                updatedStocks[index].price = update.price
+            }
+        }
+
+        stocks = updatedStocks
+    }
+}
+
+// MARK: - Preview Support
+
+extension PriceFeedViewModel {
+    @MainActor
+    static var preview: PriceFeedViewModel {
+        PriceFeedViewModel(repository: MockPriceFeedRepository())
     }
 }

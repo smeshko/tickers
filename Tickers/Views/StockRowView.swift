@@ -23,7 +23,7 @@ struct StockRowView: View {
                     .font(.body)
                     .fontWeight(.medium)
                     .monospacedDigit()
-                    .foregroundStyle(isFlashing ? flashColor : .primary)
+                    .foregroundStyle(isFlashing ? stock.priceDirection.color : .primary)
 
                 changeBadge
             }
@@ -49,7 +49,7 @@ struct StockRowView: View {
 
     private var changeBadge: some View {
         HStack(spacing: 3) {
-            Image(systemName: directionIcon)
+            Image(systemName: stock.priceDirection.iconName)
                 .font(.caption2)
                 .fontWeight(.bold)
             Text(stock.priceChangePercent, format: .percent.sign(strategy: .always()).precision(.fractionLength(2)))
@@ -59,33 +59,9 @@ struct StockRowView: View {
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 4)
-        .background(badgeColor.opacity(0.15))
-        .foregroundStyle(badgeColor)
+        .background(stock.priceDirection.color.opacity(0.15))
+        .foregroundStyle(stock.priceDirection.color)
         .clipShape(Capsule())
-    }
-
-    private var directionIcon: String {
-        switch stock.priceDirection {
-        case .up: "arrow.up"
-        case .down: "arrow.down"
-        case .unchanged: "minus"
-        }
-    }
-
-    private var badgeColor: Color {
-        switch stock.priceDirection {
-        case .up: .green
-        case .down: .red
-        case .unchanged: .secondary
-        }
-    }
-
-    private var flashColor: Color {
-        switch stock.priceDirection {
-        case .up: .green
-        case .down: .red
-        case .unchanged: .secondary
-        }
     }
 }
 

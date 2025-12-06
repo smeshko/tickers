@@ -1,11 +1,28 @@
 import Foundation
+import SwiftUI
 
 struct Stock: Identifiable, Hashable {
-    
+
     enum PriceDirection {
         case up
         case down
         case unchanged
+
+        var iconName: String {
+            switch self {
+            case .up: "arrow.up"
+            case .down: "arrow.down"
+            case .unchanged: "minus"
+            }
+        }
+
+        var color: Color {
+            switch self {
+            case .up: .green
+            case .down: .red
+            case .unchanged: .secondary
+            }
+        }
     }
     
     let id: String

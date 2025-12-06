@@ -16,11 +16,12 @@ struct FeedView: View {
                 SymbolDetailView(symbol: symbol)
             }
             .listStyle(.plain)
-            .navigationTitle("Stocks")
+            .navigationTitle("Tickers")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
                     connectionStatusView
                 }
+                .sharedBackgroundVisibility(.hidden)
                 ToolbarItem(placement: .topBarTrailing) {
                     streamToggleButton
                 }
@@ -48,5 +49,5 @@ struct FeedView: View {
 
 #Preview {
     FeedView()
-        .environmentObject(PriceFeedViewModel())
+        .environmentObject(PriceFeedViewModel.preview)
 }
