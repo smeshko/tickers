@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import OSLog
 
 protocol PriceFeedRepositoryProtocol {
     var isConnectedPublisher: AnyPublisher<Bool, Never> { get }
@@ -47,6 +48,7 @@ final class PriceFeedRepository: PriceFeedRepositoryProtocol {
     }
 
     func startStreaming(for stocks: [Stock]) {
+        Log.repository.info("Starting stream for \(stocks.count) stocks")
         currentStocks = stocks.map { stock in
             StockDTO(
                 symbol: stock.symbol,
@@ -65,6 +67,7 @@ final class PriceFeedRepository: PriceFeedRepositoryProtocol {
     }
 
     func stopStreaming() {
+        Log.repository.info("Stopping stream")
         timerCancellable?.cancel()
         timerCancellable = nil
         webSocketService.disconnect()
@@ -99,6 +102,7 @@ private extension PriceFeedRepository {
     func encodePriceUpdates(_ updates: [PriceUpdateDTO]) -> String? {
         guard let data = try? encoder.encode(updates),
               let jsonString = String(data: data, encoding: .utf8) else {
+            Log.repository.error("Failed to encode price updates")
             return nil
         }
         return jsonString
@@ -107,6 +111,7 @@ private extension PriceFeedRepository {
     func decodePriceUpdates(from message: String) -> [PriceUpdateDTO]? {
         guard let data = message.data(using: .utf8),
               let decoded = try? decoder.decode([PriceUpdateDTO].self, from: data) else {
+            Log.repository.error("Failed to decode price updates")
             return nil
         }
         return decoded

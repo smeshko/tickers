@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import OSLog
 
 protocol WebSocketServiceProtocol {
     var isConnectedPublisher: AnyPublisher<Bool, Never> { get }
@@ -36,13 +37,16 @@ final class WebSocketService: WebSocketServiceProtocol {
     func connect() {
         guard webSocketTask == nil else { return }
 
+        Log.websocket.info("Connecting to \(self.url.absoluteString, privacy: .public)")
         webSocketTask = session.webSocketTask(with: url)
         webSocketTask?.resume()
         isConnectedSubject.send(true)
+        Log.websocket.info("Connected")
         receiveMessage()
     }
 
     func disconnect() {
+        Log.websocket.info("Disconnecting")
         webSocketTask?.cancel(with: .normalClosure, reason: nil)
         webSocketTask = nil
         isConnectedSubject.send(false)
@@ -54,7 +58,7 @@ final class WebSocketService: WebSocketServiceProtocol {
         let message = URLSessionWebSocketTask.Message.string(message)
         webSocketTask.send(message) { [weak self] error in
             if let error {
-                print("WebSocket send error: \(error.localizedDescription)")
+                Log.websocket.error("Send failed: \(error.localizedDescription, privacy: .public)")
                 self?.handleDisconnection()
             }
         }
@@ -79,13 +83,14 @@ final class WebSocketService: WebSocketServiceProtocol {
                 self.receiveMessage()
 
             case .failure(let error):
-                print("WebSocket receive error: \(error.localizedDescription)")
+                Log.websocket.error("Receive failed: \(error.localizedDescription, privacy: .public)")
                 self.handleDisconnection()
             }
         }
     }
 
     private func handleDisconnection() {
+        Log.websocket.warning("Connection lost")
         webSocketTask = nil
         isConnectedSubject.send(false)
     }

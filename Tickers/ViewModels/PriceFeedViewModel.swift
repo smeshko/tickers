@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import OSLog
 
 @MainActor
 final class PriceFeedViewModel: ObservableObject {
@@ -55,6 +56,7 @@ private extension PriceFeedViewModel {
 
     private func loadStocks() async {
         stocks = await repository.fetchStocks()
+        Log.viewModel.info("Loaded \(self.stocks.count) stocks")
     }
 
     private func setupSubscriptions() {
@@ -71,6 +73,7 @@ private extension PriceFeedViewModel {
     }
 
     private func applyPriceUpdates(_ updates: [PriceUpdate]) {
+        Log.viewModel.debug("Applying \(updates.count) price updates")
         var updatedStocks = stocks
 
         // TODO: Improve performance
