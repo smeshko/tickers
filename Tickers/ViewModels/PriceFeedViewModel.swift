@@ -1,12 +1,14 @@
 import Foundation
 import Combine
+import Observation
 import OSLog
 
+@Observable
 @MainActor
-final class PriceFeedViewModel: ObservableObject {
-    @Published private(set) var stocks: [Stock] = []
-    @Published private(set) var isStreaming = false
-    @Published private(set) var isConnected = false
+final class PriceFeedViewModel {
+    private(set) var stocks: [Stock] = []
+    private(set) var isStreaming = false
+    private(set) var isConnected = false
 
     private let repository: PriceFeedRepositoryProtocol
     private var cancellables = Set<AnyCancellable>()
@@ -62,7 +64,10 @@ private extension PriceFeedViewModel {
     private func setupSubscriptions() {
         repository.isConnectedPublisher
             .receive(on: DispatchQueue.main)
-            .assign(to: &$isConnected)
+            .sink { [weak self] connected in
+                self?.isConnected = connected
+            }
+            .store(in: &cancellables)
 
         repository.priceUpdatesPublisher
             .receive(on: DispatchQueue.main)

@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct FeedView: View {
-    @EnvironmentObject var viewModel: PriceFeedViewModel
+    @State var viewModel: PriceFeedViewModel
 
     var body: some View {
         NavigationStack {
@@ -13,7 +13,7 @@ struct FeedView: View {
             }
             .animation(.smooth, value: viewModel.sortedStocks.map(\.id))
             .navigationDestination(for: String.self) { symbol in
-                SymbolDetailView(symbol: symbol)
+                SymbolDetailView(viewModel: viewModel, symbol: symbol)
             }
             .listStyle(.plain)
             .navigationTitle("Tickers")
@@ -62,6 +62,5 @@ struct FeedView: View {
 }
 
 #Preview {
-    FeedView()
-        .environmentObject(PriceFeedViewModel.preview)
+    FeedView(viewModel: PriceFeedViewModel.preview)
 }

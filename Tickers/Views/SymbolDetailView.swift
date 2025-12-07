@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct SymbolDetailView: View {
-    @EnvironmentObject var viewModel: PriceFeedViewModel
+    @State var viewModel: PriceFeedViewModel
     let symbol: String
 
     private var stock: Stock? {
@@ -92,7 +92,6 @@ struct SymbolDetailView: View {
 
 #Preview {
     NavigationStack {
-        SymbolDetailView(symbol: "AAPL")
-            .environmentObject(PriceFeedViewModel.preview)
+        SymbolDetailView(viewModel: PriceFeedViewModel.preview, symbol: "AAPL")
     }
 }
